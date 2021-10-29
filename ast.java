@@ -112,10 +112,30 @@ abstract class ASTnode {
     abstract public void unparse(PrintWriter p, int indent);
 
     // this method can be used by the unparse methods to do indenting
-    protected void addIndent(PrintWriter p, int indent) {
+    public void addIndent(PrintWriter p, int indent) {
         for (int k = 0; k < indent; k++) p.print(" ");
     }
+
+    public void tableCheck(IdNode id, Sym sym, SymTable symT) {
+        String idName;
+        if(id.getSym().isStruct()) {
+            idName = "struct " + id.getIdName();
+        } else {
+            idName = id.getIdName();
+        }
+
+        try {
+            st.addDecl(idName, sym);
+        } catch (DuplicateSymException e) {
+            id.errorReport("Multiply declared identifire");
+        } catch (EmptySymTableException e) {
+            id.errorReport("Error scope in varDeclNode");
+        }
+        
+    }
+
 }
+
 
 // **********************************************************************
 // <<<ProgramNode,  DeclListNode, FormalsListNode, FnBodyNode,
@@ -125,14 +145,21 @@ abstract class ASTnode {
 class ProgramNode extends ASTnode {
     public ProgramNode(DeclListNode L) {
         myDeclList = L;
+        symT = new SymTable();
+    }
+
+    public void nameAnalyze(){
+        myDeclList.nameAnalyze(symT);
     }
 
     public void unparse(PrintWriter p, int indent) {
         myDeclList.unparse(p, indent);
     }
 
-    // 1 kid
+
+    // 2 kid
     private DeclListNode myDeclList;
+    private SymTable symT;
 }
 
 class DeclListNode extends ASTnode {
